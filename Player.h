@@ -34,12 +34,14 @@ public:
 
 	/*
 	define the collision event effect on the player
+
+		- OPTIONAL -
 	*/
-	void hit() {
+	/*void hit() {
 		QPropertyAnimation *animation = new QPropertyAnimation(effect, "color");
 		animation->setDuration(5000);
 		animation->setStartValue(QColor(Qt::red));
 		animation->setEndValue(QColor(Qt::black));
 		animation->start();
-	}
+	}*/
 };

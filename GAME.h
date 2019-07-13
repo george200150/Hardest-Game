@@ -1,39 +1,29 @@
-/*
-int wallTickness = 5;
-		auto br = QBrush(Qt::gray);
-
-		leftWall = new Wall(0, 0, wallTickness, 800);
-
-		rightWall = new Wall(600 - wallTickness - 1, 0, wallTickness, 800);
-
-		topWall = new Wall(0, 0, 600, wallTickness);
-
-		bottomWall = new Wall(0, 800 - wallTickness - 1, width(), wallTickness);
-
-		scene->addItem(leftWall);
-		scene->addItem(rightWall);
-		scene->addItem(topWall);
-		scene->addItem(bottomWall);
-*/
-
 #pragma once
 #include <QtWidgets/QGraphicsScene>
 #include <QtWidgets/QGraphicsView>
 #include <QtWidgets/QMessageBox>
 #include "Player.h"
 #include "Wall.h"
-//#include "padle.h"
-//#include "brick.h"
-//#include "ball.h"
-//#include "MyText.h"
 #include <vector>
 #include "GameEngine.h"
+/*
+we choose that the level *ALWAYS* starts in the bottom left and ends in bottom right
+consequently, we made the coordinates easier to write for each situation
+*/
 class GAME : public QGraphicsView {
 private:
 	GameEngine& engine;
+	
 	QGraphicsScene* scene;
+	int sceneWidth, sceneHeight;
+
 	Player* player;
+	int playerWidth, playerHeight;
+
 	Wall* winObjective;
+	int winObjectiveWidth, winObjectiveHeight;
+
+	int move_distance_on_grid;
 
 
 	std::vector<Player*> playerSnaps;
@@ -46,12 +36,13 @@ private:
 
 	/*
 	Define the scene borders
+	relative definition according to the size of the window
 	*/
 	void initEnclosingWals() {
 		int wallTickness = 5;
 		auto br = QBrush(Qt::gray);
 
-		leftWall = new QGraphicsRectItem(0, 0, wallTickness, height()-50);
+		leftWall = new QGraphicsRectItem(0, 0, wallTickness, height());
 		leftWall->setBrush(br);
 
 		rightWall = new QGraphicsRectItem(width() - wallTickness - 1, 0, wallTickness, height());
@@ -60,7 +51,7 @@ private:
 		topWall = new QGraphicsRectItem(0, 0, width(), wallTickness);
 		topWall->setBrush(br);
 
-		bottomWall = new QGraphicsRectItem(100, height() - wallTickness - 1, width(), wallTickness);
+		bottomWall = new QGraphicsRectItem(0, height() - wallTickness - 1, width(), wallTickness);
 		bottomWall->setBrush(br);
 
 		scene->addItem(leftWall);
@@ -75,25 +66,40 @@ private:
 
 					(TODO ALLOW CHANGEABLE COORDINATES FOR START)
 
+					(TODO - on function call, the dimensions of the PLAYER object should be PROPORTIONAL to the dimensions of the PATH to the objective)
+
+		//function call: 30 30 50 50
+		// 50 50     30 30
+		// x  h()-y  w  h
+		it is calculated from the bottom left corner (x,y positive - mathematically)
 	*/
-	void createPlayer() {
+	void createPlayer(int player_size_x, int player_size_y, int player_start_x, int player_start_y) {
 		player = new Player;
-		player->setRect(0, 0, 30, 30);
-		player->setPos(50, height() - 50);
+		player->setRect(0, 0, player_size_x, player_size_y);//	W	H	Y		don't we just use the rectangle directly in the scene?
+		player->setPos(player_start_x, height() - player_start_y);
 		scene->addItem(player);
 		playerSnaps.push_back(player);
 	}
 
+	/*
+	Create the win objective model on the board
 	
-	void createWinObjective() {
-		winObjective = new Wall{ 50, 50 , Qt::green};
-		winObjective->setPos(width()-65,height()-70);
+		//function call: 50 50 65 70
+		// 65     70     50 50
+		// w()-x  h()-y  w  h
+		it is calculated from the bottom right corner (x negative, y positive - mathematically)
+	*/
+	void createWinObjective(int win_size_x, int win_size_y, int start_x, int start_y) {
+		winObjective = new Wall{ win_size_x, win_size_y , Qt::green};
+		winObjective->setPos(width() - start_x, height() - start_y);
 		scene->addItem(winObjective);
 	}
 
 
 	/*
-	Create the collidable objects that would eventually end the game
+	Create the collidable objects that would eventually end the game when hit
+
+	we consider the default coodrinate system when typing in values
 	*/
 	void addWall(int x, int y, int wallW, int wallH) {
 		Wall* wall = new Wall{ wallW, wallH, Qt::gray };
@@ -131,54 +137,42 @@ private:
 		//works only if setMouseTracking(true);
 		auto x = ev->pos().x();
 		auto y = ev->pos().y();
-		player->setPos(x - 15, y - 15);
+		player->setPos(x - playerWidth / 2, y - playerHeight / 2);//CENTER THE PLAYER ICON RELATIVE TO THE ARROW ON SCREEN (also relative to the dimensions of the player)
 	}
 
 
 	/*
 	Keboard-controlled player is allowed
 	*/
-	void keyPressEvent(QKeyEvent* ev) override {
+	void keyPressEvent(QKeyEvent* ev) override {//KEY-BASED MOVEMENT DISTANCE SHOULD BE PROPORTIONAL TO THE DIMENSIONS OF THE WINDOW / PATH
 		if (ev->key() == Qt::Key_Left) {
-			player->moveX(-30);
+			player->moveX(-move_distance_on_grid);
 		}
 		else if (ev->key() == Qt::Key_Right) {
-			player->moveX(30);
+			player->moveX(move_distance_on_grid);
 		}
 		else if (ev->key() == Qt::Key_Up) {
-			player->moveY(-30);
+			player->moveY(-move_distance_on_grid);
 		}
 		else if (ev->key() == Qt::Key_Down) {
-			player->moveY(30);
+			player->moveY(move_distance_on_grid);
 		}
 	}
 
 
 	/*
-	Defines the gameplay itself - the collisions, the win objective...
+	Defines the gameplay itself - the collisions, the win objective
 	*/
 	void advanceGame() {
-		//for (auto pl : playerSnaps) {
-		//	auto collides = pl->collidingItems();
 
-			//pl->hit();
-			//player->hit();
 		auto collides = player->collidingItems();
 
-		/*if (player->collidesWithItem(leftWall) ||
-			player->collidesWithItem(rightWall) ||
-			player->collidesWithItem(bottomWall) ||
-			player->collidesWithItem(topWall)) {
-			engine.wallHit();
-			//etc...
-		}*/
-
 		for(auto el : collides){
-			if (el == winObjective) {
-				engine.gameFinished(true);
+			if (el == winObjective) {//reach the goal
+				engine.goalHit();
 			}
-			else {
-				engine.gameFinished(false);
+			else {//hit a wall
+				engine.wallHit();
 			}
 		}
 	}
@@ -189,25 +183,28 @@ private:
 	/*
 	Create the scene
 	*/
-	void initScene() {
+	void initScene(int size_x, int size_y) {
 		scene = new QGraphicsScene;
 		setScene(scene);
 
 		setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 		setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-		setFixedSize(800, 600);
-		scene->setSceneRect(0, 0, 800, 600);
-		setBackgroundBrush(QBrush(QColor(170,230,255,127)));
+		setFixedSize(size_x, size_y);
+		scene->setSceneRect(0, 0, size_x, size_y);//define the scene as the whole window
+		setBackgroundBrush(QBrush(QColor(170,230,255,127)));//lightblue
 
 	}
 
 public:
-	GAME(GameEngine& engine) :engine{ engine } {
-			setMouseTracking(true);
-			initScene();
+	GAME(GameEngine& engine, int sceneWidth, int sceneHeight, int playerWidth, int playerHeight, int winObjectiveWidth, int winObjectiveHeight, int move_distance_on_grid, bool mouse_tracking) :
+		engine{ engine }, sceneWidth{ sceneWidth }, sceneHeight{ sceneHeight }, playerWidth{ playerWidth }, playerHeight{ playerHeight }, winObjectiveWidth{ winObjectiveWidth }, winObjectiveHeight{ winObjectiveHeight },
+		move_distance_on_grid{ move_distance_on_grid } {
+		//move distance on grid <- 30 (same value as the size of player)
+			setMouseTracking(mouse_tracking);
+			initScene(sceneWidth, sceneHeight);
 			initEnclosingWals();
-			createPlayer();
-			createWinObjective();
+			createPlayer(playerWidth, playerHeight,50,50);//starting coordinates should be relative to the window size 
+			createWinObjective(winObjectiveWidth, winObjectiveHeight,65,70);//finish coordinates should be relative to the window size 
 			initSignalSlots();
 		}
 };
