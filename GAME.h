@@ -10,9 +10,9 @@
 we choose that the level *ALWAYS* starts in the bottom left and ends in bottom right
 consequently, we made the coordinates easier to write for each situation
 */
-class GAME : public QGraphicsView {
+class GAME : public QGraphicsView {//I HAD TO MODIFY CONSTRUCTOR TO USE POINTERS!!!
 private:
-	GameEngine& engine;
+	GameEngine* engine;
 	
 	QGraphicsScene* scene;
 	int sceneWidth, sceneHeight;
@@ -112,14 +112,14 @@ private:
 	*/
 	void initSignalSlots() {
 
-		QObject::connect(&engine, &GameEngine::wallCreated, [&](int x, int y, int wallW, int wallH) {
+		QObject::connect(engine, &GameEngine::wallCreated, [&](int x, int y, int wallW, int wallH) {
 			addWall(x, y, wallW, wallH);
 		});
 
 		//advanceGame invoked every time  
-		QObject::connect(&engine, &GameEngine::advanceBoard, this, &GAME::advanceGame);
+		QObject::connect(engine, &GameEngine::advanceBoard, this, &GAME::advanceGame);
 
-		QObject::connect(&engine, &GameEngine::gameFinished, [&](bool win) {
+		QObject::connect(engine, &GameEngine::gameFinished, [&](bool win) {
 			if (win) {
 				QMessageBox::information(this, "Info", "You win!!!");
 			}
@@ -169,10 +169,10 @@ private:
 
 		for(auto el : collides){
 			if (el == winObjective) {//reach the goal
-				engine.goalHit();
+				engine->goalHit();
 			}
 			else {//hit a wall
-				engine.wallHit();
+				engine->wallHit();
 			}
 		}
 	}
@@ -196,7 +196,7 @@ private:
 	}
 
 public:
-	GAME(GameEngine& engine, int sceneWidth, int sceneHeight, int playerWidth, int playerHeight, int winObjectiveWidth, int winObjectiveHeight, int move_distance_on_grid, bool mouse_tracking) :
+	GAME(GameEngine* engine, int sceneWidth, int sceneHeight, int playerWidth, int playerHeight, int winObjectiveWidth, int winObjectiveHeight, int move_distance_on_grid, bool mouse_tracking) :
 		engine{ engine }, sceneWidth{ sceneWidth }, sceneHeight{ sceneHeight }, playerWidth{ playerWidth }, playerHeight{ playerHeight }, winObjectiveWidth{ winObjectiveWidth }, winObjectiveHeight{ winObjectiveHeight },
 		move_distance_on_grid{ move_distance_on_grid } {
 		//move distance on grid <- 30 (same value as the size of player)
