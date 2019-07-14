@@ -6,7 +6,7 @@
 
 
 
-
+#include "Service.h"
 
 #include <qpoint.h>
 #include <qcursor.h>
@@ -16,7 +16,9 @@ Controlls the whole game (start/end/signals for events)
 */
 class GameEngine : public QObject {
 	Q_OBJECT;
-	int score;
+
+	Service& ctrl;
+	//int score;
 
 	bool reached_objective, wall_hit;
 	
@@ -40,9 +42,44 @@ signals:
 	void gameFinished(bool win);
 
 public:
-	GameEngine(int timer_miliseconds) : time_left{ timer_miliseconds } {
+	GameEngine(Service& ctrl, int timer_miliseconds) : ctrl{ ctrl }, time_left { timer_miliseconds } {
 		reached_objective = false;
 		wall_hit = false;
+		QCursor::setPos(600, 800);//unfortunatelly, this is ABSOLUTE SCREEN (laptop/pc/whatever) COORDINATES
+		//QCursor::setPos();
+		//cursor->setPos(0, 0);
+	}
+
+	int getLowestHighscore() const {
+		auto all = this->ctrl.getHighscores();
+		if (all.size() == 0)
+			return -1;
+		else
+			return all.at(all.size() - 1).getScore();
+	}
+
+	Service& getCtrl() {
+		return this->ctrl;
+	}
+
+	string getName() const {
+		return this->ctrl.getName();
+	}
+
+	int getTimeLeft() const {
+		return this->time_left;
+	}
+
+	int getDifficulty() const {
+		return this->ctrl.getDifficulty();
+	}
+
+	vector<Highscore>& getHighscores() {
+		ctrl.getHighscores();
+	}
+
+	void addHighScore(Highscore h) {
+		ctrl.addHighscore(h);
 	}
 
 

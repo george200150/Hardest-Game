@@ -6,6 +6,56 @@
 #include "Wall.h"
 #include <vector>
 #include "GameEngine.h"
+//#include <qdialogbuttonbox.h>
+#include <qformlayout.h>
+#include <qlineedit.h>
+#include <qpushbutton.h>
+#include <qlabel.h>
+
+
+#include <qcursor.h>
+
+class Communicate: public QWidget{
+private:
+	int current_score;
+	Service& ctrl;
+	QPushButton* btnSubmit = new QPushButton{ "SUBMIT HIGHSCORE" };
+	QLabel* labName = new QLabel{ "Name:" }; 
+	
+	QLineEdit* txtName = new QLineEdit;
+	
+	void GUIsetup() {
+		QFormLayout* linit = new QFormLayout;
+		this->setLayout(linit);
+		linit->addWidget(new QLabel{ "YOUR GAME WAS GREAT! TELL US WHO YOU ARE!" });
+		linit->addRow(labName, txtName);
+		linit->addRow(btnSubmit);
+	}
+
+	void initSignalSlots() {
+
+		
+
+		QObject::connect(btnSubmit, &QPushButton::clicked, this, [&]() {
+			string you = this->txtName->text().toStdString();
+			Highscore h{ you,this->current_score };
+			this->ctrl.addHighscore(h);
+			this->close();
+		});
+	}
+
+	void initialState() {}
+
+public:
+	Communicate(Service& ctrl, int current_score) : ctrl{ ctrl }, current_score{ current_score } {
+		GUIsetup();
+		initSignalSlots();
+		initialState();
+	}
+};
+
+
+
 /*
 we choose that the level *ALWAYS* starts in the bottom left and ends in bottom right
 consequently, we made the coordinates easier to write for each situation
@@ -14,6 +64,7 @@ class GAME : public QGraphicsView {//I HAD TO MODIFY CONSTRUCTOR TO USE POINTERS
 private:
 	GameEngine* engine;
 	
+
 	QGraphicsScene* scene;
 	int sceneWidth, sceneHeight;
 
@@ -28,6 +79,7 @@ private:
 
 	std::vector<Player*> playerSnaps;
 
+	Communicate* comm;
 
 	QGraphicsRectItem* leftWall;
 	QGraphicsRectItem* rightWall;
@@ -120,8 +172,46 @@ private:
 		QObject::connect(engine, &GameEngine::advanceBoard, this, &GAME::advanceGame);
 
 		QObject::connect(engine, &GameEngine::gameFinished, [&](bool win) {
+
 			if (win) {
 				QMessageBox::information(this, "Info", "You win!!!");
+				
+				try {
+
+					int low = this->engine->getLowestHighscore();//THIS IS THE LOWEST HIGHSCORE
+
+					int time = this->engine->getTimeLeft();
+					int difficulty = this->engine->getDifficulty();
+
+					int score = 0;//WE CALCULATE THE SCORE OF THE CURRENT SESSION (using a score system which we may separately define later...)
+					if (difficulty == 1)
+						score = time / 1000000;
+					else if (difficulty == 2)
+						score = time * 10;
+					else if (difficulty == 3)
+						score = time * 10000;
+					
+					if (score < low)//COMPARE SCORES TO CHECK IF WE REACHED THE TOP 10
+						throw MyException("SCORE IS NOT HIGH ENOUGH!");
+
+					QMessageBox::information(this, "Info", "You are in top 10!!!");//IF WE REACH THIS POINT, IT MEANS WE MADE IT IN TOP 10
+
+					
+					comm = new Communicate{ this->engine->getCtrl(), score };//this is horrifyingly wrong... :O ... as the rest of the things in here
+					comm->show();
+
+
+					//this window is created too late to execute code below...
+					
+					/*string you = this->engine->getName();
+
+					Highscore highscore(you, score);
+					this->engine->addHighScore(highscore);*/
+					
+				
+
+				}
+				catch (MyException&) {};
 			}
 			else {
 				QMessageBox::information(this, "Info", "You lose!!!");
@@ -196,11 +286,16 @@ private:
 	}
 
 public:
+
 	GAME(GameEngine* engine, int sceneWidth, int sceneHeight, int playerWidth, int playerHeight, int winObjectiveWidth, int winObjectiveHeight, int move_distance_on_grid, bool mouse_tracking) :
 		engine{ engine }, sceneWidth{ sceneWidth }, sceneHeight{ sceneHeight }, playerWidth{ playerWidth }, playerHeight{ playerHeight }, winObjectiveWidth{ winObjectiveWidth }, winObjectiveHeight{ winObjectiveHeight },
 		move_distance_on_grid{ move_distance_on_grid } {
 		//move distance on grid <- 30 (same value as the size of player)
 			setMouseTracking(mouse_tracking);
+			if (mouse_tracking) {//we create a pause so that the player puts their mouse arrow right on the red square
+				//we should create an itermediate class all above the others so that it knows everything and it can transmit that information whenever is needed
+				//(like now, when I'm trying to use player coordinates in GameEngine, and whether mouse is trackable)
+			}
 			initScene(sceneWidth, sceneHeight);
 			initEnclosingWals();
 			createPlayer(playerWidth, playerHeight,50,50);//starting coordinates should be relative to the window size 

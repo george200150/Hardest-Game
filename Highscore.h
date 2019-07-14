@@ -18,20 +18,21 @@ public:
 
 class Highscore {
 private:
-	string name, score;
+	string name;
+	int score;
 
 public:
-	Highscore(string name, string score) : name{ name }, score{ score }{}
+	Highscore(string name, int score) : name{ name }, score{ score }{}
 
 	string getName() const {
 		return this->name;
 	}
 
-	string getScore() const {
+	int getScore() const {
 		return this->score;
 	}
 
 	string toString() const {
-		return this->name + " - " + this->score;
+		return this->name + " - " + std::to_string(this->score);
 	}
 };

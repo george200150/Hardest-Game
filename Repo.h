@@ -32,9 +32,10 @@ public:
 			this->highscores.push_back(highscore);
 		}
 		else {
+			if(highscores.at(highscores.size()-1).getScore() < highscore.getScore())//we check if our latest score is worthy for the fame of being in the top :)
 			this->highscores.pop_back();//the lowest score is always in the back
 		}
-		sort(highscores.begin(), highscores.end(), [&](Highscore& h1, Highscore& h2) {return h1.getScore() < h2.getScore(); });
+		sort(highscores.begin(), highscores.end(), [&](Highscore& h1, Highscore& h2) {return h1.getScore() > h2.getScore(); });//sort descendingly every time a change is made. (will be used when deleting least high score)
 		writeToFile(fileName);
 	}
 };

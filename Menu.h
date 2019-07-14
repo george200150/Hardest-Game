@@ -183,20 +183,20 @@ private:
 
 		//set the timer and path length according to the difficulty
 		if (this->ctrl.getDifficulty() == 1) {
-			engine = new GameEngine{ 999999999 };
+			engine = new GameEngine{ ctrl, 999999999 };
 			view = new GAME{ engine,	600,600,	30,30,	50,50,	30,	trackable };
 		}
 		else if (this->ctrl.getDifficulty() == 2) {
-			engine = new GameEngine{ 15000 };
+			engine = new GameEngine{ ctrl, 15000 };
 			view = new GAME{ engine,	800,600,	30,30,	50,50,	30,	trackable };
 		}
 		else if (this->ctrl.getDifficulty() == 3) {
-			engine = new GameEngine{ 10000 };
+			engine = new GameEngine{ ctrl, 10000 };
 			view = new GAME{ engine,	1200,600,	30,30,	50,50,	30,	trackable };
 		}
 		view->show();
-		//engine->startGame();
-		engine->prepareStart();
+		engine->startGame();
+		//TODO prepare start should ensure fair-play (teleportation-proof)//engine->prepareStart();
 	}
 
 	void GUIsetup() {

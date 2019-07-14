@@ -10,7 +10,7 @@ void Repo::loadFromFile(string fName) {
 	while (!in.eof()) {
 
 		string name;
-		string score;
+		int score;
 
 
 		in >> name;
