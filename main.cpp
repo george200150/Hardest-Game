@@ -32,9 +32,9 @@ int main(int argc, char *argv[])
 	return a.exec();
 
 
-	/*
-	Class creates a menu with <play>, <highscores>, <settings: <mouse/keyboard>, <difficulty - idk what should it consist of... (e.g. narrower paths, longer path, shorter time)>, <...>>
-	(a GameEngine as with or without the trackable mouse)
-	*/
+	///*
+	//Class creates a menu with <play>, <highscores>, <settings: <mouse/keyboard>, <difficulty - idk what should it consist of... (e.g. narrower paths, longer path, shorter time)>, <...>>
+	//(a GameEngine as with or without the trackable mouse)
+	//*/
 
 }

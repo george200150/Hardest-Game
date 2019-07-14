@@ -50,6 +50,11 @@ public:
 		//cursor->setPos(0, 0);
 	}
 
+	int getNumberOfHighScores() const {
+		auto all = this->ctrl.getHighscores();
+		return all.size();
+	}
+
 	int getLowestHighscore() const {
 		auto all = this->ctrl.getHighscores();
 		if (all.size() == 0)
@@ -116,7 +121,18 @@ public:
 
 		// HERE, THERE SHOULD BE A SEGMENTATION OF THE LEVEL DEPENDING ON THE
 		// WINDOW DIMENSION. THE COORDINATES *MUST NOT* BE ACTUAL NUMBERS!!!
+
+
+		//it makes no sense to create an additional wall with an additional path if not used
+		if (800 / 115 % 2 == 0) {
+			//do not create the last wall / move the win objective up (hobj = h-hobj)
+		}
+		else {
+			//create the last wall / do not move the win objective
+		}
+
 		for (int x = 0; x <= 800 / 115; x++) {
+			if (x == 0) continue;
 			if (x % 2 == 0) {
 				y = 0;
 				emit wallCreated(115 * x, y, wallW, wallH);

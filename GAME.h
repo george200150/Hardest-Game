@@ -34,8 +34,6 @@ private:
 
 	void initSignalSlots() {
 
-		
-
 		QObject::connect(btnSubmit, &QPushButton::clicked, this, [&]() {
 			string you = this->txtName->text().toStdString();
 			Highscore h{ you,this->current_score };
@@ -178,6 +176,7 @@ private:
 				
 				try {
 
+					int number_of_highscores = this->engine->getNumberOfHighScores();
 					int low = this->engine->getLowestHighscore();//THIS IS THE LOWEST HIGHSCORE
 
 					int time = this->engine->getTimeLeft();
@@ -187,11 +186,11 @@ private:
 					if (difficulty == 1)
 						score = time / 1000000;
 					else if (difficulty == 2)
-						score = time * 10;
-					else if (difficulty == 3)
+						score = time * 100;
+					else if (difficulty == 3)//could get beeter (e.g. use time % 100000 / 10)
 						score = time * 10000;
 					
-					if (score < low)//COMPARE SCORES TO CHECK IF WE REACHED THE TOP 10
+					if (number_of_highscores == 10 && score < low)//COMPARE SCORES TO CHECK IF WE REACHED THE TOP 10
 						throw MyException("SCORE IS NOT HIGH ENOUGH!");
 
 					QMessageBox::information(this, "Info", "You are in top 10!!!");//IF WE REACH THIS POINT, IT MEANS WE MADE IT IN TOP 10
@@ -238,7 +237,7 @@ private:
 		if (ev->key() == Qt::Key_Left) {
 			player->moveX(-move_distance_on_grid);
 		}
-		else if (ev->key() == Qt::Key_Right) {
+		else if (ev->key() == Qt::Key_Right) {//THIS PART COULD BE PARAMETERISED AND THE KEYS COULD BE ASSIGNED IN THE SETTINGS
 			player->moveX(move_distance_on_grid);
 		}
 		else if (ev->key() == Qt::Key_Up) {
