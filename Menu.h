@@ -22,7 +22,7 @@ private:
 		int top = 1;
 		for (const auto& el : elems) {
 			QListWidgetItem* item = new QListWidgetItem;
-			item->setText(QString::fromStdString(std::to_string(top) + " " + el.toString()));
+			item->setText(QString::fromStdString(std::to_string(top) + ". " + el.toString()));
 			top++;
 			lst->addItem(item);
 		}
@@ -66,9 +66,30 @@ private:
 	QRadioButton* radioDif3 = new QRadioButton;
 
 
+	//here, there should be another setting to assign keys for the game functions
+	QLabel* labKeys = new QLabel{ "SELECT KEYS:" };
+	QLabel* labMoveUp = new QLabel{ "MOVE UP:" };
+	QLabel* labMoveDown = new QLabel{ "MOVE DOWN:" };
+	QLabel* labMoveLeft = new QLabel{ "MOVE LEFT:" };
+	QLabel* labMoveRight = new QLabel{ "MOVE RIGHT:" };
+
+	QPushButton* btnMU = new QPushButton{ "CHANGE (assign another key)" };
+	QPushButton* btnMD = new QPushButton{ "CHANGE (assign another key)" };
+	QPushButton* btnML = new QPushButton{ "CHANGE (assign another key)" };
+	QPushButton* btnMR = new QPushButton{ "CHANGE (assign another key)" };
+
 
 
 	void GUIsetup() {
+
+		//QWidget* wdg_key = new QWidget;
+		//QFormLayout* flay = new QFormLayout;
+		//wdg_key->setLayout(flay);
+		//flay->addRow(labKeys);
+		//flay->addRow(labMoveUp, btnMU);
+		//flay->addRow(labMoveDown, btnMD);
+		//flay->addRow(labMoveLeft, btnML);
+		//flay->addRow(labMoveRight, btnMR);
 
 
 		QWidget* wdgk_m = new QWidget;
@@ -96,6 +117,7 @@ private:
 		wdgLst->setLayout(lform);
 		lform->addRow(labK_M, wdgk_m);
 		lform->addRow(labDif, wdgd);
+		//lform->addRow(labKeys, wdg_key);
 		lform->addRow(btnReset, btnSave);
 
 
@@ -122,6 +144,64 @@ private:
 		QObject::connect(radioDif1, &QRadioButton::clicked, this, [&]() {this->ctrl.setDifficulty(1); });
 		QObject::connect(radioDif2, &QRadioButton::clicked, this, [&]() {this->ctrl.setDifficulty(2); });
 		QObject::connect(radioDif3, &QRadioButton::clicked, this, [&]() {this->ctrl.setDifficulty(3); });
+
+		/*
+
+		M	U	S	T		U	S	E		A		V	E	C	T	O	R		F	O	R		K	E	Y	S	!!!
+
+
+		WELL, AS YOU CAN SEE, THINGS GOT MESSY.
+		THEREFORE, I WILL GET A CLASS ATTRIBUTE WHICH REPRESENTS THE CHOSEN BUTTON TO BE ASSIGNED A NEW KEY.
+		THAT BUTTON STAYS *null* BEFORE AND AFTER THE ASSIGNMENT (THE CLASS ATTRIBUTE REFFERING THE BUTTON WILL BE RESET AFTER KeyPress Event)
+
+		WE SHOULD ALSO CONSIDER NOT ASSIGNING ANY KEY TO THE BUTTON... IN THIS CASE, THE BUTTON SHOULD BE SET TO *null* OR ASSIGNED ITS DEFAULT VALUE.
+		HOW - well after a given time runs out
+
+
+
+		..............or..............
+
+		*I could create a virtual keyboard to ease everything... ( it seems cooler, but less user friendly...I guess...)
+
+
+		..............else..............
+
+
+		create a line edit for each command, create a map of assignable keys and ensure that each command has a key and only one assigned
+		*/
+
+		
+		//QKeyEvent::KeyPress
+		//QObject::connect();
+		//QObject::connect(btnMU, &QPushButton::clicked, this, [&]() {
+		//	QKeyEvent* ev;
+		//	//int assignment = ev->KeyPress(); - won't work like this, it's a signal or something...
+		//	int new_key_assignment = ev->key();
+		//	auto keys = this->ctrl.getAssignedKeys();
+		//	keys[0] = new_key_assignment;
+		//	this->labMoveUp->setText("MOVE UP: " + ev->key());
+		//});
+		//QObject::connect(btnMU, &QPushButton::clicked, this, [&]() {
+		//	QKeyEvent* ev;
+		//	int new_key_assignment = ev->key();
+		//	auto keys = this->ctrl.getAssignedKeys();
+		//	keys[1] = new_key_assignment;
+		//	this->labMoveDown->setText("MOVE DOWN: " + ev->key());
+		//});
+		//QObject::connect(btnMU, &QPushButton::clicked, this, [&]() {
+		//	QKeyEvent* ev;
+		//	int new_key_assignment = ev->key();
+		//	auto keys = this->ctrl.getAssignedKeys();
+		//	keys[2] = new_key_assignment;
+		//	this->labMoveLeft->setText("MOVE LEFT: " + ev->key());
+		//});
+		//QObject::connect(btnMU, &QPushButton::clicked, this, [&]() {
+		//	QKeyEvent* ev;
+		//	int new_key_assignment = ev->key();
+		//	auto keys = this->ctrl.getAssignedKeys();
+		//	keys[0] = new_key_assignment;
+		//	this->labMoveRight->setText("MOVE RIGHT: " + ev->key());
+		//});
 	}
 
 
@@ -137,6 +217,16 @@ private:
 			this->radioK->setChecked(true);
 		else if(ctrl.getCommandType() == 2)
 			this->radioM->setChecked(true);
+
+		//auto assigned_keys = this->ctrl.getAssignedKeys();
+		//int key_up = assigned_keys.at(0);
+		//int key_down = assigned_keys.at(1);
+		//int key_left = assigned_keys.at(2);
+		//int key_right = assigned_keys.at(3);
+		//labMoveUp->setText(labMoveUp->text() + " " + QString::fromStdString(std::to_string(key_up)));
+		//labMoveDown->setText(labMoveDown->text() + " " + QString::fromStdString(std::to_string(key_down)));
+		//labMoveLeft->setText(labMoveLeft->text() + " " + QString::fromStdString(std::to_string(key_left)));
+		//labMoveRight->setText(labMoveRight->text() + " " + QString::fromStdString(std::to_string(key_right)));
 	}
 
 public:
@@ -194,6 +284,11 @@ private:
 			engine = new GameEngine{ ctrl, 10000 };
 			view = new GAME{ engine,	1200,600,	30,30,	50,50,	30,	trackable };
 		}
+		
+		//view->showFullScreen(); this is going to be messy. Now, I can map global resolution coordinates into the window (maybe not neccessary)
+		//that's the part when absolute(x,y) / 2 - window(x,y) comes in...
+		//- anyways, there are too many problems and a single me...
+
 		view->show();
 		engine->startGame();
 		//TODO prepare start should ensure fair-play (teleportation-proof)//engine->prepareStart();
@@ -251,3 +346,100 @@ public:
 
 
 
+/*
+class Menu : public QWidget {
+private:
+
+	Commander& commander;
+
+	GameEngine* engine = nullptr;
+	GAME* view = nullptr;
+
+	QPushButton* btnPlay = new QPushButton{ "PLAY" };
+	QPushButton* btnHigh = new QPushButton{ "HIGHSCORES" };
+	QPushButton* btnSett = new QPushButton{ "SETTINGS" };
+	QPushButton* btnExit = new QPushButton{ "EXIT" };
+
+	void createGameAccordingToSettings() {
+		//in further updates, th game itself could be more personalised
+
+		//set the control mode
+		bool trackable = false;
+		if (this->commander.getCommandType() == 1)
+			trackable = false;
+		else if (this->commander.getCommandType() == 2)
+			trackable = true;
+
+
+		//set the timer and path length according to the difficulty
+		if (this->commander.getDifficulty() == 1) {
+			engine = new GameEngine{ commander, 999999999 };
+			view = new GAME{ commander, engine,	600,600,	30,30,	50,50,	30,	trackable };
+		}
+		else if (this->commander.getDifficulty() == 2) {
+			engine = new GameEngine{ commander, 15000 };
+			view = new GAME{ commander, engine,	800,600,	30,30,	50,50,	30,	trackable };
+		}
+		else if (this->commander.getDifficulty() == 3) {
+			engine = new GameEngine{ commander, 10000 };
+			view = new GAME{ commander, engine,	1200,600,	30,30,	50,50,	30,	trackable };
+		}
+
+		//view->showFullScreen(); this is going to be messy. Now, I can map global resolution coordinates into the window (maybe not neccessary)
+		//that's the part when absolute(x,y) / 2 - window(x,y) comes in...
+		//- anyways, there are too many problems and a single me...
+
+		view->show();
+		engine->startGame();
+		//TODO prepare start should ensure fair-play (teleportation-proof)//engine->prepareStart();
+	}
+
+	void GUIsetup() {
+		QVBoxLayout* linit = new QVBoxLayout;
+		this->setLayout(linit);
+
+		linit->addWidget(new QLabel{ "!!!HARDEST GAME EVER!!!" });
+		linit->addWidget(btnPlay);
+		linit->addWidget(btnHigh);
+		linit->addWidget(btnSett);
+		linit->addWidget(btnExit);
+	}
+
+	void setSignalSlots() {
+
+		QObject::connect(btnPlay, &QPushButton::clicked, this, &Menu::createGameAccordingToSettings);
+
+
+		QObject::connect(btnHigh, &QPushButton::clicked, this, [&]() {
+			Highscores* high = new Highscores{ commander };
+			high->show();
+		});
+
+
+		QObject::connect(btnSett, &QPushButton::clicked, this, [&]() {
+			Settings* wndw = new Settings{ commander };
+			wndw->show();
+		});
+
+
+		QObject::connect(btnExit, &QPushButton::clicked, this, [&]() {this->close(); });
+	}
+
+	void initialGUIstate() {
+
+	}
+
+public:
+	Menu(Commander& commander) : commander{ commander } {
+		GUIsetup();
+		setSignalSlots();
+		initialGUIstate();
+	}
+	~Menu() {
+		if (engine != nullptr)
+			delete engine;
+		if (view != nullptr)
+			delete view;
+	}
+};
+*/

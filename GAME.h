@@ -15,19 +15,25 @@
 
 #include <qcursor.h>
 
-class Communicate: public QWidget{
+
+
+#include "Commander.h"
+
+
+
+class Communicate : public QWidget {
 private:
 	int current_score;
-	Service& ctrl;
+	Commander& commander;
 	QPushButton* btnSubmit = new QPushButton{ "SUBMIT HIGHSCORE" };
-	QLabel* labName = new QLabel{ "Name:" }; 
-	
+	QLabel* labName = new QLabel{ "Name:" };
+
 	QLineEdit* txtName = new QLineEdit;
-	
+
 	void GUIsetup() {
 		QFormLayout* linit = new QFormLayout;
 		this->setLayout(linit);
-		linit->addWidget(new QLabel{ "YOUR GAME WAS GREAT! TELL US WHO YOU ARE!" });
+		linit->addRow(new QLabel{ "YOUR GAME WAS GREAT! TELL US WHO YOU ARE!" });
 		linit->addRow(labName, txtName);
 		linit->addRow(btnSubmit);
 	}
@@ -36,8 +42,12 @@ private:
 
 		QObject::connect(btnSubmit, &QPushButton::clicked, this, [&]() {
 			string you = this->txtName->text().toStdString();
+			
+			if (you == "")
+				you = "*unknown*";
+
 			Highscore h{ you,this->current_score };
-			this->ctrl.addHighscore(h);
+			this->commander.addHighscore(h);
 			this->close();
 		});
 	}
@@ -45,7 +55,7 @@ private:
 	void initialState() {}
 
 public:
-	Communicate(Service& ctrl, int current_score) : ctrl{ ctrl }, current_score{ current_score } {
+	Communicate(Commander& commander, int current_score) : commander{ commander }, current_score{ current_score } {
 		GUIsetup();
 		initSignalSlots();
 		initialState();
@@ -60,8 +70,11 @@ consequently, we made the coordinates easier to write for each situation
 */
 class GAME : public QGraphicsView {//I HAD TO MODIFY CONSTRUCTOR TO USE POINTERS!!!
 private:
+
+	Commander commander;
+
 	GameEngine* engine;
-	
+
 
 	QGraphicsScene* scene;
 	int sceneWidth, sceneHeight;
@@ -113,11 +126,8 @@ private:
 
 	/*
 	Create the player model at starting point
-
 					(TODO ALLOW CHANGEABLE COORDINATES FOR START)
-
 					(TODO - on function call, the dimensions of the PLAYER object should be PROPORTIONAL to the dimensions of the PATH to the objective)
-
 		//function call: 30 30 50 50
 		// 50 50     30 30
 		// x  h()-y  w  h
@@ -133,14 +143,14 @@ private:
 
 	/*
 	Create the win objective model on the board
-	
+
 		//function call: 50 50 65 70
 		// 65     70     50 50
 		// w()-x  h()-y  w  h
 		it is calculated from the bottom right corner (x negative, y positive - mathematically)
 	*/
 	void createWinObjective(int win_size_x, int win_size_y, int start_x, int start_y) {
-		winObjective = new Wall{ win_size_x, win_size_y , Qt::green};
+		winObjective = new Wall{ win_size_x, win_size_y , Qt::green };
 		winObjective->setPos(width() - start_x, height() - start_y);
 		scene->addItem(winObjective);
 	}
@@ -148,7 +158,6 @@ private:
 
 	/*
 	Create the collidable objects that would eventually end the game when hit
-
 	we consider the default coodrinate system when typing in values
 	*/
 	void addWall(int x, int y, int wallW, int wallH) {
@@ -170,10 +179,12 @@ private:
 		QObject::connect(engine, &GameEngine::advanceBoard, this, &GAME::advanceGame);
 
 		QObject::connect(engine, &GameEngine::gameFinished, [&](bool win) {
+			
+			this->releaseMouse();
 
 			if (win) {
 				QMessageBox::information(this, "Info", "You win!!!");
-				
+
 				try {
 
 					int number_of_highscores = this->engine->getNumberOfHighScores();
@@ -189,25 +200,24 @@ private:
 						score = time * 100;
 					else if (difficulty == 3)//could get beeter (e.g. use time % 100000 / 10)
 						score = time * 10000;
-					
+
 					if (number_of_highscores == 10 && score < low)//COMPARE SCORES TO CHECK IF WE REACHED THE TOP 10
 						throw MyException("SCORE IS NOT HIGH ENOUGH!");
 
 					QMessageBox::information(this, "Info", "You are in top 10!!!");//IF WE REACH THIS POINT, IT MEANS WE MADE IT IN TOP 10
 
-					
-					comm = new Communicate{ this->engine->getCtrl(), score };//this is horrifyingly wrong... :O ... as the rest of the things in here
+
+					comm = new Communicate{ commander, score };//this is horrifyingly wrong... :O ... as the rest of the things in here
 					comm->show();
 
 
 					//this window is created too late to execute code below...
-					
-					/*string you = this->engine->getName();
 
+					/*string you = this->engine->getName();
 					Highscore highscore(you, score);
 					this->engine->addHighScore(highscore);*/
-					
-				
+
+
 
 				}
 				catch (MyException&) {};
@@ -256,7 +266,7 @@ private:
 
 		auto collides = player->collidingItems();
 
-		for(auto el : collides){
+		for (auto el : collides) {
 			if (el == winObjective) {//reach the goal
 				engine->goalHit();
 			}
@@ -280,26 +290,50 @@ private:
 		setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 		setFixedSize(size_x, size_y);
 		scene->setSceneRect(0, 0, size_x, size_y);//define the scene as the whole window
-		setBackgroundBrush(QBrush(QColor(170,230,255,127)));//lightblue
+		setBackgroundBrush(QBrush(QColor(170, 230, 255, 127)));//lightblue
 
 	}
 
+
+	//void GAME::MouseButtonPress(QMouseEvent* ev) {
+	//	ev->ignore();
+	//}
+	//this should have disabled mouse on screen.... it did not work...
+
 public:
 
-	GAME(GameEngine* engine, int sceneWidth, int sceneHeight, int playerWidth, int playerHeight, int winObjectiveWidth, int winObjectiveHeight, int move_distance_on_grid, bool mouse_tracking) :
-		engine{ engine }, sceneWidth{ sceneWidth }, sceneHeight{ sceneHeight }, playerWidth{ playerWidth }, playerHeight{ playerHeight }, winObjectiveWidth{ winObjectiveWidth }, winObjectiveHeight{ winObjectiveHeight },
-		move_distance_on_grid{ move_distance_on_grid } {
+	GAME(Commander commander, GameEngine* engine, int sceneWidth, int sceneHeight, int playerWidth, int playerHeight, int winObjectiveWidth, int winObjectiveHeight, int move_distance_on_grid, bool mouse_tracking) :
+		commander{ commander }, engine { engine }, sceneWidth{ sceneWidth }, sceneHeight{ sceneHeight }, playerWidth{ playerWidth }, playerHeight{ playerHeight }, winObjectiveWidth{ winObjectiveWidth },
+		winObjectiveHeight{ winObjectiveHeight }, move_distance_on_grid{ move_distance_on_grid } {
 		//move distance on grid <- 30 (same value as the size of player)
-			setMouseTracking(mouse_tracking);
-			if (mouse_tracking) {//we create a pause so that the player puts their mouse arrow right on the red square
-				//we should create an itermediate class all above the others so that it knows everything and it can transmit that information whenever is needed
-				//(like now, when I'm trying to use player coordinates in GameEngine, and whether mouse is trackable)
-			}
-			initScene(sceneWidth, sceneHeight);
-			initEnclosingWals();
-			createPlayer(playerWidth, playerHeight,50,50);//starting coordinates should be relative to the window size 
-			createWinObjective(winObjectiveWidth, winObjectiveHeight,65,70);//finish coordinates should be relative to the window size 
-			initSignalSlots();
+		setMouseTracking(mouse_tracking);
+		if (mouse_tracking) {//we create a pause so that the player puts their mouse arrow right on the red square
+			//we should create an itermediate class all above the others so that it knows everything and it can transmit that information whenever is needed
+			//(like now, when I'm trying to use player coordinates in GameEngine, and whether mouse is trackable)
 		}
-};
+		initScene(sceneWidth, sceneHeight);
+		initEnclosingWals();
+		createPlayer(playerWidth, playerHeight, 3 * playerWidth / 2, 3 * playerHeight / 2);// 50 50
+		createWinObjective(winObjectiveWidth, winObjectiveHeight, 3 * winObjectiveWidth / 2, 3 * winObjectiveHeight / 2);//65 70
+		//objective could be moved upwards in some cases...
+		initSignalSlots();
 
+		this->move(0,0);
+
+		//QCursor::setPos(QWidget::mapFromGlobal(QPoint(width(), height())));//horrifyingly unexplainable behaviour...
+		if (mouse_tracking) {
+			QCursor::setPos(0 + playerWidth, height() - playerHeight);
+		}
+		else {
+			this->grabMouse();
+			//this->underMouse() - this could be useful later...
+		}
+		
+
+		//QCursor::setPos(QWidget::mapFromGlobal(QPoint(width(), 600)));
+	}
+
+	/*~GAME() { apparently, destructor is not called when the window's (X) button is pressed
+		this->releaseMouse();
+	}*/
+};
