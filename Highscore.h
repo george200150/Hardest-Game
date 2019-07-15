@@ -3,7 +3,11 @@
 using std::string;
 
 
+/*
+Custom Exception that receives through constructor a string
 
+has a message that will be returned when print() is called
+*/
 class MyException {
 private:
 	string msg;
@@ -16,6 +20,11 @@ public:
 
 
 
+/*
+Highscore is a class consisting of two fields, name and score.
+
+A highscore is assigned to a player and has a positive value.
+*/
 class Highscore {
 private:
 	string name;
