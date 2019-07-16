@@ -4,18 +4,10 @@
 #include <QTimer>
 #include <QTime>
 
-
-
 #include "Service.h"
 
 #include <qdebug.h>
-#include <qdesktopwidget.h>
-//#include <qguiapplication.h>
-//#include <qscreen.h>
-#include <qpoint.h>
-#include <qcursor.h>
-
-
+//#include <qdesktopwidget.h>
 
 #include "Commander.h"
 
@@ -46,6 +38,8 @@ signals:
 	void notReady();
 	//this signal is declared to deal with the player moving through the board, so that we can detect colisions
 	void advanceBoard();
+	//this signal is created to transmit the time to the gui
+	void tickTock(int time);
 	//this signal is declared so that walls are created when needed
 	void wallCreated(int x, int y, int wallW, int wallH);
 	//this signal is created to notify any changings that occur during the game
@@ -55,57 +49,13 @@ public:
 	GameEngine(Commander* comm, int timer_miliseconds) : comm{ comm }, time_left { timer_miliseconds } {
 		reached_objective = false;
 		wall_hit = false;
-		//QCursor::setPos(600, 800);//unfortunatelly, this is ABSOLUTE SCREEN (laptop/pc/whatever) COORDINATES
-
 		
-		//QCursor::setPos(absolute_w / 2 - window_w / 2 , absolute_h / 2 - window_h / 2);
-
-		/*
-
-		so, I decided to center the mouse arow first, thento use the dimensions of the game window to position the arrow correctly at the starting point.
-
-		*/
-
-		//QCursor::setPos();
-		//cursor->setPos(0, 0);
-
-		/*QRect rec = QApplication::desktop()->screenGeometry();
-		height = rec.height();
-		width = rec.width();*/
-
-		//QScreen* screen = QGuiApplication::primaryScreen();
-		//const QRect screenGeometry = screen->geometry();
-		//int height = screenGeometry.height();
-		//int width = screenGeometry.width();
-
-		/*QDesktopWidget widget;
-		QRect mainScreenSize = widget.availableGeometry(widget.scree);
-		int width = mainScreenSize.width();
-		int height = mainScreenSize.height();
-		QCursor::setPos(width, height);*/
 		/*QDesktopWidget widget;
 		int width = widget.screenGeometry().width();
 		int height = widget.screenGeometry().height();
 		qDebug() << width;
 		qDebug() << height;*/
 
-		//QCursor::setPos(width, height);
-
-		//apparently, the cursor cannot be positioned outside the window range...
-		//QCursor::setPos(1920, 1080);
-		//QCursor::setPos(800, 600);
-
-		//in this case, there is no other solution than to set the window to be drawn starting at (0,0)...
-		//
-		//..........or..........
-		//
-		//i could manually map the window using screen resolution...
-
-	}
-
-	~GameEngine() {//this is not enough to stop timers when force close window
-		timer.stop();
-		getReady.stop();
 	}
 
 	int getNumberOfHighScores() const {
@@ -211,11 +161,6 @@ public:
 	}
 
 
-	/*
-	i have to catch the ESC key press and stop the timer...
-	*/
-
-
 	bool isGameFinished() {
 		return time_left == 0 || reached_objective || wall_hit;
 	}
@@ -230,6 +175,7 @@ public:
 		QObject::connect(&timer, &QTimer::timeout, [&]() {
 			this->time_left--;
 			emit advanceBoard();
+			emit tickTock(this->time_left);
 			if (isGameFinished()) {
 				timer.stop();
 				emit gameFinished(time_left != 0 && !wall_hit);
@@ -237,7 +183,7 @@ public:
 			if (this->comm->escWasPressed())
 				timer.stop();
 		});
-		//generate timeout signal every ms
-		timer.start(1);
+		//generate timeout signal every 10 ms
+		timer.start(10);
 	}
 };

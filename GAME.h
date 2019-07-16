@@ -6,18 +6,16 @@
 #include "Wall.h"
 #include <vector>
 #include "GameEngine.h"
-//#include <qdialogbuttonbox.h>
+
 #include <qformlayout.h>
 #include <qlineedit.h>
 #include <qpushbutton.h>
 #include <qlabel.h>
 
-
 #include <qcursor.h>
 
-
-
 #include "Commander.h"
+#include <ScoreSystem.h>
 
 
 /*
@@ -32,9 +30,9 @@ class Communicate : public QWidget {
 private:
 	int current_score;
 	Commander* commander;
+
 	QPushButton* btnSubmit = new QPushButton{ "SUBMIT HIGHSCORE" };
 	QLabel* labName = new QLabel{ "Name:" };
-
 	QLineEdit* txtName = new QLineEdit;
 
 	void GUIsetup() {
@@ -56,6 +54,7 @@ private:
 			Highscore h{ you,this->current_score };
 			this->commander->addHighscore(h);
 			this->close();
+			
 		});
 	}
 
@@ -63,6 +62,9 @@ private:
 
 public:
 	Communicate(Commander* commander, int current_score) : commander{ commander }, current_score{ current_score } {
+		
+		this->setAttribute(Qt::WA_DeleteOnClose);
+
 		GUIsetup();
 		initSignalSlots();
 		initialState();
@@ -78,18 +80,19 @@ consequently, we made the coordinates easier to write for each situation
 class GAME : public QGraphicsView {
 private:
 
-	Commander* commander;
+	Commander* commander = nullptr;
 
-	GameEngine* engine;
+	GameEngine* engine = nullptr;
 
+	QLabel* labTime = new QLabel{ "time: " };
 
-	QGraphicsScene* scene;
+	QGraphicsScene* scene = nullptr;
 	int sceneWidth, sceneHeight;
 
-	Player* player;
+	Player* player = nullptr;
 	int playerWidth, playerHeight;
 
-	Wall* winObjective;
+	Wall* winObjective = nullptr;
 	int winObjectiveWidth, winObjectiveHeight;
 
 	int move_distance_on_grid;
@@ -103,6 +106,7 @@ private:
 	QGraphicsRectItem* rightWall;
 	QGraphicsRectItem* topWall;
 	QGraphicsRectItem* bottomWall;
+
 
 	/*
 	Define the scene borders
@@ -180,6 +184,8 @@ private:
 
 		//advanceGame invoked every time  
 		QObject::connect(engine, &GameEngine::advanceBoard, this, &GAME::advanceGame);
+		
+		QObject::connect(engine, &GameEngine::tickTock, this, [&](int time) {this->labTime->setText("time: " + QString::fromStdString(std::to_string(time / 100)) + "." + QString::fromStdString(std::to_string(time % 100))); });
 
 		QObject::connect(engine, &GameEngine::gameFinished, [&](bool win) {
 			
@@ -197,19 +203,10 @@ private:
 					int difficulty = this->engine->getDifficulty();
 
 
-
+					ScoreSystem ss{ difficulty,time };
 					
-					int score = 0;//WE CALCULATE THE SCORE OF THE CURRENT SESSION (using a score system which we may separately define later...)
-					
-					if (difficulty == 1)
-						score = time;
-					else if (difficulty == 2)
-						score = time * 100;
-					else if (difficulty == 3)//score system could get better
-						score = time * 10000;
+					int score = ss.getScore();
 
-
-					
 					
 					if (number_of_highscores == 10 && score < low)//COMPARE SCORES TO CHECK IF WE REACHED THE TOP 10
 						throw MyException("SCORE IS NOT HIGH ENOUGH!");
@@ -266,6 +263,14 @@ private:
 		}
 	}
 
+	/*
+	create the possibility to load levels by using (*.csv) files. I must create a format:
+	scene info
+	player info
+	win_objective info
+	(wall info) - as many times you want
+	*/
+
 
 	/*
 	Defines the gameplay itself - the collisions, the win objective
@@ -300,13 +305,20 @@ private:
 		scene->setSceneRect(0, 0, size_x, size_y);//define the scene as the whole window
 		setBackgroundBrush(QBrush(QColor(170, 230, 255, 127)));//lightblue
 
+		QWidget* wdgTime = new QWidget;
+		QHBoxLayout* lwidget = new QHBoxLayout;
+		wdgTime->setAutoFillBackground(true);
+		wdgTime->setLayout(lwidget);
+		lwidget->addStretch();
+		lwidget->addWidget(labTime);
+		QPalette pal = palette();
+		pal.setColor(QPalette::Background, Qt::gray);
+		wdgTime->setAutoFillBackground(true);
+		wdgTime->setPalette(pal);
+
+		scene->addWidget(wdgTime);
 	}
 
-
-	//void GAME::MouseButtonPress(QMouseEvent* ev) {
-	//	ev->ignore();
-	//}
-	//this should have disabled mouse on screen.... it did not work...
 
 public:
 
@@ -315,16 +327,9 @@ public:
 		playerHeight{ this->commander->getPlayerH() }, winObjectiveWidth{ this->commander->getWinObjW() }, winObjectiveHeight{ this->commander->getWinObjH() },
 		move_distance_on_grid{ this->commander->getMoveDistanceOnGrid() } {
 		
-
+		this->setAttribute(Qt::WA_DeleteOnClose);
 
 		setMouseTracking(mouse_tracking);
-		
-		if (mouse_tracking) {//we create a pause so that the player puts their mouse arrow right on the red square
-			//we should create an itermediate class all above the others so that it knows everything and it can transmit that information whenever is needed
-			//(like now, when I'm trying to use player coordinates in GameEngine, and whether mouse is trackable)
-		}
-
-
 
 
 		initScene(sceneWidth, sceneHeight);
@@ -338,7 +343,6 @@ public:
 
 		this->move(0,0);
 
-		//QCursor::setPos(QWidget::mapFromGlobal(QPoint(width(), height())));//horrifyingly unexplainable behaviour...
 		if (mouse_tracking) {
 			QCursor::setPos(0 + playerWidth, height() - playerHeight);
 		}
@@ -347,8 +351,6 @@ public:
 			//this->underMouse() - this could be useful later...
 		}
 		
-
-		//QCursor::setPos(QWidget::mapFromGlobal(QPoint(width(), 600)));
 	}
 
 };

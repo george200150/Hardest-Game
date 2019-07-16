@@ -38,6 +38,9 @@ private:
 	void initialGUIstate() { reloadList(this->ctrl.getHighscores()); }
 public:
 	Highscores(Service& ctrl) : ctrl{ ctrl } {
+
+		this->setAttribute(Qt::WA_DeleteOnClose);
+
 		GUIsetup();
 		setSignalSlots();
 		initialGUIstate();
@@ -231,6 +234,9 @@ private:
 
 public:
 	Settings(Service& ctrl) : ctrl{ ctrl } {
+
+		this->setAttribute(Qt::WA_DeleteOnClose);
+
 		GUIsetup();
 		setSignalSlots();
 		initialGUIstate();
@@ -274,17 +280,17 @@ private:
 		//set the timer and path length according to the difficulty (maybe)
 		if (this->ctrl.getDifficulty() == 1) {
 			commander = new Commander{ ctrl,30, 30,wall_w,wall_h,50, 50, 600, 600, 30};
-			engine = new GameEngine{ commander, 60000 };//60 seconds
+			engine = new GameEngine{ commander, 6000 };//60 seconds (timer emits signals every 10 ms, so we divide the time value to 10)
 			view = new GAME{ commander, engine,	trackable };
 		}
 		else if (this->ctrl.getDifficulty() == 2) {
 			commander = new Commander{ ctrl,30, 30,wall_w,wall_h,50, 50, 800, 600, 30 };
-			engine = new GameEngine{ commander, 15000 };//15 seconds
+			engine = new GameEngine{ commander, 1500 };//15 seconds
 			view = new GAME{ commander, engine,	trackable };
 		}
 		else if (this->ctrl.getDifficulty() == 3) {
 			commander = new Commander{ ctrl,30, 30,wall_w,wall_h,50, 50, 1150, 600, 30 };
-			engine = new GameEngine{ commander, 10000 };//10 seconds
+			engine = new GameEngine{ commander, 1000 };//10 seconds
 			view = new GAME{ commander, engine,	trackable };
 		}
 
@@ -324,7 +330,16 @@ private:
 		});
 
 
-		QObject::connect(btnExit, &QPushButton::clicked, this, [&]() {this->close(); });
+		QObject::connect(btnExit, &QPushButton::clicked, this, [&]() {
+			//if (this->commander != nullptr)
+			//	delete commander;
+			//if (this->engine != nullptr)
+			//	delete engine;
+			//if (this->view != nullptr)
+			//	delete view;
+			//i should use Observer in order to close all windows at once...(and more...)
+			this->close();
+		});
 	}
 
 	void initialGUIstate() {
