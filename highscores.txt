@@ -2,6 +2,8 @@ Hacker
 7540000
 George200150
 61100
+Nabla
+43400
 George5
 13000
 George2
@@ -12,3 +14,5 @@ George3
 5307
 George4
 4690
+Laura
+3800
